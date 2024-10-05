@@ -6,16 +6,24 @@ import 'package:audioplayers/audioplayers.dart';
 class PlaySource {
   final AudioPlayer _player;
 
-  final File file;
-  const PlaySource({required AudioPlayer player, required this.file})
-      : _player = player;
+  File _file;
+  PlaySource({required AudioPlayer player, required File file})
+      : _file = file,
+        _player = player;
 
-  Future<Duration> get duration async =>
+  Future<Duration> get totalDuration async =>
       await _player.getDuration() ?? Duration.zero;
+  Future<Duration> get currentDuration async =>
+      await _player.getCurrentPosition() ?? Duration.zero;
+
+  File get file => _file;
+
+  set file(File file) {
+    _file = file;
+  }
 
   Stream<AudioEvent> get stream => _player.eventStream;
 
-  @override
   void dispose() {
     _player.dispose();
   }
@@ -35,5 +43,10 @@ class PlaySource {
 
   void stop() {
     _player.stop();
+  }
+
+  getPosition() async {
+    var posf = await _player.getCurrentPosition();
+    return posf?.inSeconds ?? 0;
   }
 }

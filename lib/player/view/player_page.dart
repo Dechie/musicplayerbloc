@@ -8,52 +8,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:musicplayer/play_source.dart';
 import 'package:musicplayer/player/bloc/player_bloc.dart';
 
+part 'player_view.dart';
+
 class PlayerPage extends StatefulWidget {
   final AudioPlayer audioPlayer;
   const PlayerPage({super.key, required this.audioPlayer});
 
   @override
   State<PlayerPage> createState() => _PlayerPageState();
-}
-
-class PlayerView extends StatelessWidget {
-  final int durSeconds;
-
-  const PlayerView({
-    super.key,
-    required this.durSeconds,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          const Expanded(
-            flex: 18,
-            child: SizedBox(
-              child: Column(
-                children: [
-                  Text(
-                      //"currently playing: ${context.select((PlayerBloc bloc) => bloc.state.fileName.split(".").first)}"),
-                      "currently playing"),
-                ],
-              ),
-            ),
-          ),
-          Expanded(
-            child: Slider(
-              value: durSeconds.toDouble(),
-              onChanged: (value) {},
-              min: 0,
-              max: context
-                  .select((PlayerBloc bloc) => bloc.state.duration.toDouble()),
-            ),
-          )
-        ],
-      ),
-    );
-  }
 }
 
 class _PlayerPageState extends State<PlayerPage> {
@@ -79,7 +41,10 @@ class _PlayerPageState extends State<PlayerPage> {
         body: BlocBuilder<PlayerBloc, MyPlayerState>(
           builder: (context, state) {
             if (state is PlayerRunInProgress) {
-              return PlayerView(durSeconds: state.duration);
+              return PlayerView(
+                durSeconds: state.position,
+                bloc: _playerBloc,
+              );
             } else if (state is PlayerFailure) {
               return Center(
                 child: Text('Error: ${state.error}'),

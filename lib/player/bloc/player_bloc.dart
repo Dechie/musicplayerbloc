@@ -13,18 +13,19 @@ class PlayerBloc extends Bloc<PlayerEvent, MyPlayerState> {
   static const int _duration = 0;
 
   final PlaySource _playSource;
-
   StreamSubscription<AudioEvent>? _playerSubscription;
+
   PlayerBloc({required PlaySource playSource})
       : _playSource = playSource,
         super(const PlayerInitial(_duration, "")) {
     on<PlayerFileSelected>(_onStarted);
-    on<PlayerStarted>(_onStarted);
+    //on<PlayerStarted>(_onStarted);
     on<_PlayerPlayed>(_onPlayed);
     on<PlayerPaused>(_onPaused);
     on<PlayerResumed>(_onResumed);
     on<PlayerReset>(_onReset);
   }
+  PlaySource get playSource => _playSource;
 
   @override
   Future<void> close() {
@@ -43,7 +44,7 @@ class PlayerBloc extends Bloc<PlayerEvent, MyPlayerState> {
       try {
         _playerSubscription?.pause();
         _playSource.pause();
-        Duration currentDuration = await _playSource.duration;
+        Duration currentDuration = await _playSource.currentDuration;
         emit(PlayerRunPause(currentDuration.inSeconds, ""));
       } catch (e) {
         emit(PlayerFailure(0, "", error: e.toString()));
@@ -53,8 +54,8 @@ class PlayerBloc extends Bloc<PlayerEvent, MyPlayerState> {
 
   void _onPlayed(_PlayerPlayed event, Emitter<MyPlayerState> emit) {
     emit(
-      event.duration > 0
-          ? PlayerRunInProgress(event.duration, "")
+      event.currentPosition > 0
+          ? PlayerRunInProgress(event.currentPosition, "")
           : const PlayerRunComplete(),
     );
   }
@@ -70,7 +71,7 @@ class PlayerBloc extends Bloc<PlayerEvent, MyPlayerState> {
       _playerSubscription?.resume();
       _playSource.resume();
       try {
-        Duration currentDuration = await _playSource.duration;
+        Duration currentDuration = await _playSource.currentDuration;
         emit(PlayerRunInProgress(currentDuration.inSeconds, ""));
       } catch (e) {
         emit(PlayerFailure(0, "", error: e.toString()));
@@ -78,21 +79,28 @@ class PlayerBloc extends Bloc<PlayerEvent, MyPlayerState> {
     }
   }
 
-  void _onStarted(PlayerEvent event, Emitter<MyPlayerState> emit) async {
-    if (state is PlayerFileSelected) {
+  void _onStarted(PlayerFileSelected event, Emitter<MyPlayerState> emit) async {
+    if (state is PlayerInitial) {
       try {
-        Duration currentDuration = await _playSource.duration;
+        _playSource.file = event.file;
+        Duration currentDuration = await _playSource.currentDuration;
 
         emit(PlayerRunInProgress(
             currentDuration.inSeconds, _playSource.file.path));
         _playerSubscription?.cancel();
         _playerSubscription = _playSource.stream.listen(
-          (event) => add(
-            _PlayerPlayed(
-              duration: event.duration?.inSeconds ?? 0,
-            ),
-          ),
+          (event) async {
+            int pos = await _playSource.getPosition();
+            // current position of the audio.
+            add(
+              _PlayerPlayed(
+                currentPosition: pos,
+              ),
+            );
+          },
         );
+
+        _playSource.startPlay();
       } catch (e) {
         emit(PlayerFailure(0, _playSource.file.path, error: e.toString()));
       }
