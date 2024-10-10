@@ -23,6 +23,9 @@ class _PlayerViewState extends State<PlayerView> {
   Widget build(BuildContext context) {
     var current =
         context.select((PlayerBloc bloc) => bloc.state.position.toDouble());
+    var c = context.watch();
+    var cc = c.runtimeType;
+    printt("$cc");
     printt("current: $current, total: $totalDuration");
 
     return Scaffold(
@@ -49,7 +52,7 @@ class _PlayerViewState extends State<PlayerView> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.all(8),
-                        child: Text("$minStr:$secStr"),
+                        child: Text("$current"),
                       ),
                       Slider(
                           //value: context.select((PlayerBloc bloc) =>

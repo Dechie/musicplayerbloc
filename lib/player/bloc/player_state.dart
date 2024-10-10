@@ -2,11 +2,11 @@ part of 'player_bloc.dart';
 
 sealed class MyPlayerState extends Equatable {
   final int position;
-  final String fileName;
-  const MyPlayerState(this.position, this.fileName);
+  final File file;
+  const MyPlayerState(this.position, this.file,);
 
   @override
-  List<Object> get props => [position, fileName];
+  List<Object> get props => [position, file];
 }
 
 final class PlayerFailure extends MyPlayerState {
@@ -28,7 +28,7 @@ final class PlayerInitial extends MyPlayerState {
 }
 
 final class PlayerRunComplete extends MyPlayerState {
-  const PlayerRunComplete() : super(0, "");
+  PlayerRunComplete() : super(0, File(""));
 }
 
 final class PlayerRunInProgress extends MyPlayerState {

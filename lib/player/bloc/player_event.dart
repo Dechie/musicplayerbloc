@@ -5,8 +5,12 @@ sealed class PlayerEvent {
 }
 
 class PlayerFileSelected extends PlayerEvent {
+  final int position;
   final File file;
-  const PlayerFileSelected({required this.file});
+  const PlayerFileSelected({
+    required this.file,
+    required this.position,
+  });
 }
 
 class PlayerPaused extends PlayerEvent {
@@ -18,7 +22,9 @@ class PlayerReset extends PlayerEvent {
 }
 
 class PlayerResumed extends PlayerEvent {
-  const PlayerResumed();
+  final int currentPosition;
+  final File file;
+  const PlayerResumed({required this.currentPosition, required this.file});
 }
 
 class PlayerStarted extends PlayerEvent {
@@ -32,5 +38,9 @@ class PlayerStopped extends PlayerEvent {
 
 class _PlayerPlayed extends PlayerEvent {
   final int currentPosition;
-  const _PlayerPlayed({required this.currentPosition});
+  final File file;
+  const _PlayerPlayed({
+    required this.currentPosition,
+    required this.file,
+  });
 }

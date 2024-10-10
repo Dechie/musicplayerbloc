@@ -17,7 +17,7 @@ class PlayerBloc extends Bloc<PlayerEvent, MyPlayerState> {
 
   PlayerBloc({required PlaySource playSource})
       : _playSource = playSource,
-        super(const PlayerInitial(_duration, "")) {
+        super(PlayerInitial(_duration, File(""))) {
     on<PlayerFileSelected>(_onStarted);
     //on<PlayerStarted>(_onStarted);
     on<_PlayerPlayed>(_onPlayed);
@@ -36,7 +36,7 @@ class PlayerBloc extends Bloc<PlayerEvent, MyPlayerState> {
   void _onFileSelected(
       PlayerFileSelected event, Emitter<MyPlayerState> emit) async {
     _playSource.startPlay();
-    emit(const PlayerInitial(0, ""));
+    emit(PlayerRunInProgress(event.position, event.file));
   }
 
   void _onPaused(PlayerPaused event, Emitter<MyPlayerState> emit) async {
@@ -45,9 +45,9 @@ class PlayerBloc extends Bloc<PlayerEvent, MyPlayerState> {
         _playerSubscription?.pause();
         _playSource.pause();
         Duration currentDuration = await _playSource.currentDuration;
-        emit(PlayerRunPause(currentDuration.inSeconds, ""));
+        emit(PlayerRunPause(currentDuration.inSeconds, File("")));
       } catch (e) {
-        emit(PlayerFailure(0, "", error: e.toString()));
+        emit(PlayerFailure(0, File(""), error: e.toString()));
       }
     }
   }
@@ -55,15 +55,15 @@ class PlayerBloc extends Bloc<PlayerEvent, MyPlayerState> {
   void _onPlayed(_PlayerPlayed event, Emitter<MyPlayerState> emit) {
     emit(
       event.currentPosition > 0
-          ? PlayerRunInProgress(event.currentPosition, "")
-          : const PlayerRunComplete(),
+          ? PlayerRunInProgress(event.currentPosition, event.file)
+          : PlayerRunComplete(),
     );
   }
 
   void _onReset(PlayerReset event, Emitter<MyPlayerState> emit) {
     _playerSubscription?.cancel();
     _playSource.stop();
-    emit(PlayerInitial(0, _playSource.file.path));
+    emit(PlayerInitial(0, File("")));
   }
 
   void _onResumed(PlayerResumed event, Emitter<MyPlayerState> emit) async {
@@ -72,21 +72,24 @@ class PlayerBloc extends Bloc<PlayerEvent, MyPlayerState> {
       _playSource.resume();
       try {
         Duration currentDuration = await _playSource.currentDuration;
-        emit(PlayerRunInProgress(currentDuration.inSeconds, ""));
+        emit(PlayerRunInProgress(
+          currentDuration.inSeconds,
+          event.file,
+        ));
       } catch (e) {
-        emit(PlayerFailure(0, "", error: e.toString()));
+        emit(PlayerFailure(0, event.file, error: e.toString()));
       }
     }
   }
 
-  void _onStarted(PlayerFileSelected event, Emitter<MyPlayerState> emit) async {
+  void _onStarted(
+      PlayerFileSelected playerEvent, Emitter<MyPlayerState> emit) async {
     if (state is PlayerInitial) {
       try {
-        _playSource.file = event.file;
+        _playSource.file = playerEvent.file;
         Duration currentDuration = await _playSource.currentDuration;
 
-        emit(PlayerRunInProgress(
-            currentDuration.inSeconds, _playSource.file.path));
+        emit(PlayerRunInProgress(currentDuration.inSeconds, playerEvent.file));
         _playerSubscription?.cancel();
         _playerSubscription = _playSource.stream.listen(
           (event) async {
@@ -95,6 +98,7 @@ class PlayerBloc extends Bloc<PlayerEvent, MyPlayerState> {
             add(
               _PlayerPlayed(
                 currentPosition: pos,
+                file: playerEvent.file,
               ),
             );
           },
@@ -102,7 +106,7 @@ class PlayerBloc extends Bloc<PlayerEvent, MyPlayerState> {
 
         _playSource.startPlay();
       } catch (e) {
-        emit(PlayerFailure(0, _playSource.file.path, error: e.toString()));
+        emit(PlayerFailure(0, _playSource.file, error: e.toString()));
       }
     }
   }

@@ -40,6 +40,7 @@ class _PlayerPageState extends State<PlayerPage> {
         ),
         body: BlocBuilder<PlayerBloc, MyPlayerState>(
           builder: (context, state) {
+            printt("${state.runtimeType}");
             if (state is PlayerRunInProgress) {
               return PlayerView(
                 durSeconds: state.position,
@@ -68,6 +69,12 @@ class _PlayerPageState extends State<PlayerPage> {
     );
   }
 
+  void printt(String s) {
+    for (int i = 0; i < 20; ++i) {
+      print(s);
+    }
+  }
+
   Future<void> _selectAndPlayFile() async {
     try {
       var filee = (await FilePicker.platform.pickFiles(
@@ -80,7 +87,7 @@ class _PlayerPageState extends State<PlayerPage> {
         setState(() {
           file = File(filee.path!);
         });
-        _playerBloc.add(PlayerFileSelected(file: file));
+        _playerBloc.add(PlayerFileSelected(file: file, position: 0));
       }
     } on PlatformException catch (e) {
       print(e.toString());
